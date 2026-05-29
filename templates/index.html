@@ -1,1 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Personality Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Modern CSS Variables for easy theming */
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+        }
 
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 550px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            margin: 0 0 8px 0;
+            color: var(--text-main);
+            font-size: 26px;
+        }
+
+        p.subtitle {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .input-grid {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background-color: #F9FAFB;
+            transition: all 0.2s ease;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #FFF;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: #9CA3AF;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Styling for the result area */
+        .result-box {
+            display: none; /* Hidden until prediction is made */
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #EEF2FF;
+            border: 1px solid #C7D2FE;
+            border-radius: 12px;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result-title {
+            font-size: 13px;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        #chart-wrapper {
+            display: none; /* Hidden until prediction is made */
+            margin-top: 30px;
+            position: relative;
+            height: 350px;
+            width: 100%;
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h2>AI Personality Predictor</h2>
+            <p class="subtitle">Enter your behavioral scores to generate a profile</p>
+        </div>
+
+        <form id="prediction-form">
+            <div class="input-grid">
+                <div class="input-group">
+                    <label for="f1">Social Energy (1-10)</label>
+                    <input type="number" id="f1" required min="1" max="10" step="0.1">
+                </div>
+                
+                <div class="input-group">
+                    <label for="f2">Routine Preference (1-10)</label>
+                    <input type="number" id="f2" required min="1" max="10" step="0.1">
+                </div>
+                
+                <div class="input-group">
+                    <label for="f3">Empathy Level (1-10)</label>
+                    <input type="number" id="f3" required min="1" max="10" step="0.1">
+                </div>
+                
+                <div class="input-group">
+                    <label for="f4">Stress Tolerance (1-10)</label>
+                    <input type="number" id="f4" required min="1" max="10" step="0.1">
+                </div>
+                
+                <div class="input-group">
+                    <label for="f5">Openness to Experience (1-10)</label>
+                    <input type="number" id="f5" required min="1" max="10" step="0.1">
+                </div>
+            </div>
+            
+            <button type="submit" id="submit-btn">Predict Personality</button>
+        </form>
+
+        <div class="result-box" id="result-box">
+            <div class="result-title">AI Assessment Complete</div>
+            <p class="result-value" id="result"></p>
+        </div>
+
+        <div id="chart-wrapper">
+            <canvas id="behaviorChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+        
+        // Grab UI elements to manipulate them during loading states
+        const form = document.getElementById('prediction-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultBox = document.getElementById('result-box');
+        const chartWrapper = document.getElementById('chart-wrapper');
+        const resultText = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 1. UI Loading State
+            submitBtn.innerText = "Analyzing Pattern...";
+            submitBtn.disabled = true;
+            
+            // Hide previous results if they click predict again
+            resultBox.style.display = 'none';
+            chartWrapper.style.display = 'none';
+            
+            // 2. Build Payload
+            const payload = {
+                social_energy: document.getElementById('f1').value,
+                routine_preference: document.getElementById('f2').value,
+                empathy_level: document.getElementById('f3').value,
+                stress_tolerance: document.getElementById('f4').value,
+                openness_intellect: document.getElementById('f5').value
+            };
+
+            // 3. Fetch Data
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                // 4. Handle Response
+                if (data.success) {
+                    resultText.innerText = data.prediction;
+                    
+                    // Reveal the hidden result boxes smoothly
+                    resultBox.style.display = 'block';
+                    chartWrapper.style.display = 'block';
+                    
+                    updateChart(data.stats);
+                } else {
+                    alert("Error from Server: " + data.error);
+                }
+            } catch (error) {
+                alert("Network Error: Make sure your Flask server (app.py) is running!");
+            } finally {
+                // Reset button regardless of success/fail
+                submitBtn.innerText = "Predict Personality";
+                submitBtn.disabled = false;
+            }
+        });
+
+        // 5. Dynamic Chart Rendering
+        function updateChart(stats) {
+            const ctx = document.getElementById('behaviorChart').getContext('2d');
+            
+            // Destroy the old chart so we don't get overlapping hover glitches
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            // Upgraded to a sleek Polar Area chart with modern semi-transparent colors
+            myChart = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: ['Social Energy', 'Routine', 'Empathy', 'Stress Tolerance', 'Openness'],
+                    datasets: [{
+                        label: 'Trait Intensity',
+                        data: stats,
+                        backgroundColor: [
+                            'rgba(79, 70, 229, 0.6)',   // Indigo
+                            'rgba(16, 185, 129, 0.6)',  // Emerald
+                            'rgba(245, 158, 11, 0.6)',  // Amber
+                            'rgba(239, 68, 68, 0.6)',   // Red
+                            'rgba(139, 92, 246, 0.6)'   // Purple
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            ticks: {
+                                min: 0,
+                                max: 10,
+                                stepSize: 2,
+                                backdropColor: 'transparent'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { family: "'Segoe UI', sans-serif", size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
